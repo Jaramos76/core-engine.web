@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { LOGO_DATA_URI } from "./logo-data-uri";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -23,11 +24,11 @@ export default function OpengraphImage() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 12,
+            gap: 16,
             marginBottom: 32,
           }}
         >
-          <div style={{ width: 14, height: 14, background: "#5eead4" }} />
+          <img src={LOGO_DATA_URI} width={40} height={40} alt="" />
           <div
             style={{
               fontSize: 22,
