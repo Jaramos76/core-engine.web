@@ -1,0 +1,25 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="chrome" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#DADFE6"/>
+      <stop offset="0.45" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#7C838D"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#5eead4" stroke-width="2" fill="none" stroke-linecap="round">
+    <line x1="32" y1="10" x2="32" y2="3"/>
+    <line x1="51.05" y1="21" x2="58" y2="17"/>
+    <line x1="51.05" y1="43" x2="58" y2="47"/>
+    <line x1="32" y1="54" x2="32" y2="61"/>
+    <line x1="12.95" y1="43" x2="6" y2="47"/>
+    <line x1="12.95" y1="21" x2="6" y2="17"/>
+  </g>
+  <g fill="#5eead4">
+    <circle cx="32" cy="3" r="2.2"/><circle cx="58" cy="17" r="2.2"/><circle cx="58" cy="47" r="2.2"/>
+    <circle cx="32" cy="61" r="2.2"/><circle cx="6" cy="47" r="2.2"/><circle cx="6" cy="17" r="2.2"/>
+  </g>
+  <polygon points="51.05,43 32,54 12.95,43 12.95,21 32,10 51.05,21" fill="none" stroke="url(#chrome)" stroke-width="4" stroke-linejoin="round"/>
+  <polygon points="32,22 40,26 32,30 24,26" fill="#5eead4" fill-opacity="0.35"/>
+  <polygon points="24,26 32,30 32,40 24,36" fill="#5eead4" fill-opacity="0.75"/>
+  <polygon points="32,30 40,26 40,36 32,40" fill="#5eead4" fill-opacity="1"/>
+</svg>

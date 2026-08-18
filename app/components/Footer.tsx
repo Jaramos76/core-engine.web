@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="site-footer">
       <div className="container site-footer-inner">
         <div className="brand mono">
-          <span className="brand-mark" aria-hidden="true" />
+          <img className="brand-mark" src="/logo.svg" alt="" aria-hidden="true" />
           Core Engine
         </div>
         <div className="site-footer-meta mono">

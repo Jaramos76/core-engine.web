@@ -11,7 +11,7 @@ export default function Header() {
     <header className="site-header">
       <div className="container site-header-inner">
         <a href="#top" className="brand mono">
-          <span className="brand-mark" aria-hidden="true" />
+          <img className="brand-mark" src="/logo.svg" alt="" aria-hidden="true" />
           Core Engine
         </a>
         <nav className="site-nav" aria-label="Primary">

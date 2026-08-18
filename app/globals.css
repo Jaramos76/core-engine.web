@@ -196,9 +196,9 @@ section {
 }
 
 .brand-mark {
-  width: 10px;
-  height: 10px;
-  background: var(--accent);
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
 .site-nav ul {
