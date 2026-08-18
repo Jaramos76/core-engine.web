@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 const links = [
   { href: "#what-is", label: "Overview" },
   { href: "#architecture", label: "Architecture" },
@@ -7,6 +11,8 @@ const links = [
 ];
 
 export default function Header() {
+  const [open, setOpen] = useState(false);
+
   return (
     <header className="site-header">
       <div className="container site-header-inner">
@@ -30,7 +36,32 @@ export default function Header() {
             ))}
           </ul>
         </nav>
+        <button
+          type="button"
+          className="nav-toggle"
+          aria-label="Toggle navigation menu"
+          aria-expanded={open}
+          aria-controls="mobile-nav"
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span className="nav-toggle-line" />
+          <span className="nav-toggle-line" />
+          <span className="nav-toggle-line" />
+        </button>
       </div>
+      {open && (
+        <nav id="mobile-nav" className="mobile-nav" aria-label="Primary">
+          <ul>
+            {links.map((link) => (
+              <li key={link.href}>
+                <a href={link.href} onClick={() => setOpen(false)}>
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
     </header>
   );
 }
