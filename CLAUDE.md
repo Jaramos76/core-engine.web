@@ -1,76 +1,75 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code (claude.ai/code) working in this repository.
 
 ## What this repo is
 
-The public marketing website for **Core Engine** (`coreengine.online`) — a
-provider-neutral execution foundation for tools, memory, agents, skills,
-diagnostics, and intelligent systems. This repo contains **only the public
-website**: a single-page Next.js site. It is separate from the main Core
-Engine runtime repository and must not contain application internals,
-credentials, or private infrastructure information.
+**Core Engine Web** — the public site and the Agentic OS front end for Core
+Engine (`coreengine.online`). It is a single Next.js (App Router) application
+with three surfaces:
+
+- `/` — the public marketing site (`app/page.tsx` + `app/components/`).
+- `/login` — the Rubik's Cube authentication front page.
+- `/dashboard` — the Agentic OS workspace (3D knowledge/agent graph, command
+  palette, contextual inspector, Lola, attention engine, timeline).
+
+It does not contain Core Engine runtime internals, credentials, or private
+infrastructure. All `/dashboard` data is currently mock data isolated in
+`lib/os/mock/`; the app makes no backend calls (only same-origin `/api/auth`).
 
 ## Commands
 
 ```bash
-npm install          # install dependencies
-npm run dev           # local dev server at http://localhost:3000, hot reload
-npm run lint          # eslint (flat config, eslint-config-next)
-npx tsc --noEmit       # type-check (no test suite exists)
-npm run build          # production build into .next/
-npm start               # run compiled app (next start); honors PORT env var
+npm install
+npm run dev            # http://localhost:3000, hot reload
+npm run lint           # eslint (flat config)
+npx tsc --noEmit       # type-check (no test suite)
+npm run build          # production build (standalone output)
+npm start              # run the compiled app
 ```
 
-There is no test suite. Treat `npm run lint` and `npx tsc --noEmit` as the
-correctness gate before considering a change done.
+`npm run lint` and `npx tsc --noEmit` are the correctness gate. There is no
+test suite. Both run in CI before any deploy.
 
 ## Architecture
 
-Next.js **App Router**, single route. Everything renders through
-`app/page.tsx`, which composes section components in order:
+**Marketing site** (`/`): server components composed in `app/page.tsx`
+(`Header → Hero → WhatIsCoreEngine → ArchitectureDiagram → Principles →
+DevelopmentStatus → Developers → Footer`). Section ids match the nav links in
+`Header.tsx`.
 
-```
-Header → Hero → WhatIsCoreEngine → ArchitectureDiagram → Principles
-  → DevelopmentStatus → Developers → Footer
-```
+**Agentic OS** (`/dashboard`):
+- `lib/os/` — framework-agnostic domain layer: `types.ts` (entity + relationship
+  model), `mock/dataset.ts` (isolated demo data — replace with an API loader
+  later), `graph.ts` (entity→graph projection), `attention.ts` (scoring),
+  `commands.ts` + `lola.ts` (NL command interpreter), `visual.ts` (per-category
+  colour/shape).
+- `app/dashboard/_os/` — the workspace UI. `OSProvider.tsx` is the single state
+  store. `graph/` holds the React Three Fiber force-directed 3D graph.
+- `app/dashboard/_os/graph/**` and `app/login/_cube/**` drive Three.js
+  imperatively from inside `useFrame`. `eslint.config.mjs` disables
+  `react-hooks/refs` and `react-hooks/immutability` for those paths only —
+  keep that pattern local to the 3D code.
 
-Each section is a self-contained component in `app/components/`, mapped to
-an anchor id used by in-page nav links (`Header.tsx`'s `links` array →
-`#what-is`, `#architecture`, `#principles`, `#status`, `#developers`).
-Adding, removing, or reordering a section means updating both `page.tsx`
-and the nav links in `Header.tsx` together.
+**Login** (`/login`): `app/login/_cube/` is the animated cube; `app/login/_auth/`
+is the auth service seam; `app/api/auth/route.ts` is a temporary shared-password
+endpoint (`CE_DEMO_PASSWORD`) standing in until real Core Engine auth exists.
 
-Components are server components by default; only add `"use client"` when
-a component needs interactivity/state (e.g. `Header.tsx` for its mobile
-nav toggle). Don't add a client boundary unless one is actually needed.
+**Styling**: no CSS framework. `app/globals.css` holds design tokens on `:root`
+and shared classes; `/login` and `/dashboard` each have a scoped stylesheet
+(`app/login/login.css`, `app/dashboard/os.css`) that reuses those tokens.
 
-**Styling**: no CSS framework, no CSS modules — a single global stylesheet
-(`app/globals.css`) with CSS custom properties defined on `:root` (colors,
-fonts, `--max-width`) plus shared utility classes (`.container`, `.eyebrow`,
-`.section-heading`, `.section-intro`, `.mono`, `.btn`, status-dot classes,
-etc.). Reuse these existing tokens/classes and follow the dark,
-monospace-accented design system rather than introducing inline styles or
-one-off color values.
+**3D dependencies**: `three`, `@react-three/fiber`, `@react-three/drei`,
+`d3-force-3d`, `framer-motion`. The heavy canvases are `dynamic(..., { ssr:false })`.
 
-**Generated images**: `app/icon.tsx` (favicon) and `app/opengraph-image.tsx`
-(OG image) use `next/og`'s `ImageResponse`, which cannot read from
-`public/`. Both import `LOGO_DATA_URI` from `app/logo-data-uri.ts` — a
-base64-inlined copy of `public/logo.svg`. If `public/logo.svg` changes,
-regenerate this constant with `base64 -w0 public/logo.svg` and update
-`logo-data-uri.ts` to match, or the favicon/OG image will drift out of
-sync with the real logo.
-
-**Security headers** are set centrally in `next.config.ts` (CSP, HSTS,
-X-Frame-Options, etc.) via `headers()`. If a change requires loading a new
-script/style/image/connect origin, update the CSP there rather than
-disabling it.
+**Security headers** (CSP, HSTS, etc.) are centralized in `next.config.ts`
+`headers()`. `'unsafe-eval'` is added only in dev (Turbopack). Update the CSP
+there rather than disabling it if a new origin is needed.
 
 ## Deployment
 
-No Vercel-specific APIs, no Edge Middleware, no ISR — deliberately kept
-portable to any standard Node.js host. Production deploys run
-`npm install && npm run build && npm start` (currently targeted at
-Hostinger's Node.js hosting, which assigns `PORT` and proxies to it).
-Don't introduce Vercel-only or serverless-only features without updating
-this deployment story.
+Production runs as a Docker container on the Hostinger VPS behind a shared
+Caddy reverse proxy, deployed automatically on push to `main`. See
+`DEPLOYMENT.md`. `output: "standalone"` in `next.config.ts` and the `Dockerfile`
+exist for this — keep the app portable to a plain Node host (no Vercel-only or
+serverless-only features).
