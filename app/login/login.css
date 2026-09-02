@@ -1,0 +1,333 @@
+/* Core Engine — front page / login experience.
+   Uses the design tokens defined in app/globals.css. */
+
+.login-root {
+  --login-glow-teal: radial-gradient(
+    circle,
+    rgba(94, 234, 212, 0.55),
+    rgba(94, 234, 212, 0) 70%
+  );
+  --login-glow-bright: radial-gradient(
+    circle,
+    rgba(226, 255, 250, 0.85),
+    rgba(94, 234, 212, 0.12) 70%
+  );
+  --login-glow-red: radial-gradient(
+    circle,
+    rgba(255, 84, 104, 0.5),
+    rgba(255, 84, 104, 0) 70%
+  );
+
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: radial-gradient(
+    ellipse at 50% 30%,
+    #16191d 0%,
+    #0b0c0f 46%,
+    #07080a 100%
+  );
+}
+
+/* --- 3D cube layer --- */
+
+.login-cube {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 28%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.login-cube canvas {
+  display: block;
+}
+
+.login-glow-wrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 28%;
+  display: grid;
+  place-items: center;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.login-glow {
+  width: min(72vw, 620px);
+  height: min(72vw, 620px);
+  border-radius: 50%;
+  filter: blur(34px);
+  background: var(--login-glow-teal);
+  will-change: opacity, transform;
+}
+
+/* --- foreground UI --- */
+
+.login-content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: clamp(40px, 9vh, 104px);
+  pointer-events: none;
+}
+
+.login-mark {
+  position: absolute;
+  top: clamp(22px, 4.5vh, 38px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.82;
+}
+
+.login-mark img {
+  opacity: 0.9;
+}
+
+.login-foot {
+  position: absolute;
+  bottom: clamp(14px, 3vh, 26px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  opacity: 0.55;
+}
+
+.login-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* --- glass panel --- */
+
+.login-panel {
+  pointer-events: auto;
+  width: min(92vw, 374px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 26px 26px 22px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    180deg,
+    rgba(23, 26, 31, 0.66),
+    rgba(12, 14, 17, 0.6)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 24px 70px -24px rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(22px) saturate(1.15);
+  -webkit-backdrop-filter: blur(22px) saturate(1.15);
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.login-field label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.login-field input {
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(6, 7, 9, 0.55);
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.login-field input::placeholder {
+  color: var(--text-faint);
+}
+
+.login-field input:focus {
+  outline: none;
+  border-color: var(--accent-dim);
+  background: rgba(6, 7, 9, 0.82);
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.12);
+}
+
+.login-field input:disabled {
+  opacity: 0.5;
+}
+
+.login-submit {
+  position: relative;
+  margin-top: 4px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid rgba(94, 234, 212, 0.34);
+  background: linear-gradient(
+    180deg,
+    rgba(94, 234, 212, 0.16),
+    rgba(94, 234, 212, 0.05)
+  );
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.2s ease,
+    transform 0.1s ease;
+}
+
+.login-submit:hover:not(:disabled) {
+  border-color: rgba(94, 234, 212, 0.6);
+  box-shadow: 0 0 26px -6px rgba(94, 234, 212, 0.45);
+}
+
+.login-submit:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.login-submit:disabled {
+  cursor: default;
+  color: var(--text-muted);
+}
+
+.login-submit[data-phase="success"] {
+  border-color: rgba(94, 234, 212, 0.8);
+  background: linear-gradient(
+    180deg,
+    rgba(94, 234, 212, 0.32),
+    rgba(94, 234, 212, 0.14)
+  );
+  box-shadow: 0 0 32px -4px rgba(94, 234, 212, 0.6);
+}
+
+.login-submit-spark {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(94, 234, 212, 0.3);
+  border-top-color: var(--accent);
+  animation: login-spin 0.7s linear infinite;
+}
+
+@keyframes login-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.login-hint {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--text-faint);
+}
+
+.login-hint code {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.login-message {
+  min-height: 22px;
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.login-denied {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #ff8792;
+}
+
+.login-denied-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff5468;
+  box-shadow: 0 0 10px 1px rgba(255, 84, 104, 0.7);
+}
+
+/* --- exit transition into the dashboard --- */
+
+.login-exit {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background:
+    radial-gradient(
+      circle at 50% 40%,
+      rgba(140, 244, 224, 0.9),
+      rgba(10, 11, 13, 0.98) 55%
+    ),
+    var(--bg);
+}
+
+/* --- responsive --- */
+
+@media (max-width: 640px) {
+  .login-cube,
+  .login-glow-wrap {
+    bottom: 40%;
+  }
+
+  .login-glow {
+    filter: blur(26px);
+  }
+}
+
+@media (max-height: 680px) {
+  .login-hint {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-submit-spark {
+    animation-duration: 1.5s;
+  }
+}
