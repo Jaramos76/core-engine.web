@@ -25,8 +25,12 @@ export function AgenticWorkspace() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !os.state.paletteOpen && os.state.selectedId) {
-        os.select(null);
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        os.togglePalette();
+      } else if (e.key === "Escape") {
+        if (os.state.paletteOpen) os.togglePalette(false);
+        else if (os.state.selectedId) os.select(null);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -54,7 +58,7 @@ export function AgenticWorkspace() {
       <LolaBar />
 
       <AttentionPanel />
-      <CommandPalette />
+      {os.state.paletteOpen && <CommandPalette />}
     </div>
   );
 }

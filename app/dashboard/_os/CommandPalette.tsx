@@ -16,6 +16,8 @@ const QUICK: string[] = [
   "Whole network",
 ];
 
+// Mounted only while open (see AgenticWorkspace), so component state starts
+// fresh each time. Global ⌘K / Esc handling lives in AgenticWorkspace.
 export function CommandPalette() {
   const os = useOS();
   const [query, setQuery] = useState("");
@@ -23,26 +25,9 @@ export function CommandPalette() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (os.state.paletteOpen) {
-      setQuery("");
-      setCursor(0);
-      const id = window.setTimeout(() => inputRef.current?.focus(), 30);
-      return () => window.clearTimeout(id);
-    }
-  }, [os.state.paletteOpen]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        os.togglePalette();
-      } else if (e.key === "Escape" && os.state.paletteOpen) {
-        os.togglePalette(false);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [os]);
+    const id = window.setTimeout(() => inputRef.current?.focus(), 30);
+    return () => window.clearTimeout(id);
+  }, []);
 
   const entityMatches = useMemo(
     () => (query.trim() ? searchEntities(os.dataset, query, 6) : []),
@@ -88,8 +73,6 @@ export function CommandPalette() {
     }
     return out;
   }, [interpretation, entityMatches, query, os]);
-
-  if (!os.state.paletteOpen) return null;
 
   return (
     <div className="og-palette-backdrop" onMouseDown={() => os.togglePalette(false)}>

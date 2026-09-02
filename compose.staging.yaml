@@ -1,0 +1,43 @@
+# Core Engine Web — staging deployment (dev.coreengine.online).
+#
+# TEMPLATE — not active. To bring staging online later:
+#   1. DNS: A record  dev.coreengine.online -> 2.25.81.58
+#   2. Caddyfile:  dev.coreengine.online { reverse_proxy coreengine-web-staging:3000 }
+#   3. On the VPS, in a separate checkout (e.g. /opt/core-engine-web-staging on
+#      the `dev` branch):  docker compose -f compose.staging.yaml up -d --build
+#
+# Runs fully isolated from production: different project name, different
+# container/alias, its own image tag.
+
+name: core-engine-web-staging
+
+services:
+  coreengine-web-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: core-engine-web:staging
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    networks:
+      - caddy_shared
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  caddy_shared:
+    external: true

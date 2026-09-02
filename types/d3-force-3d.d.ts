@@ -44,7 +44,6 @@ declare module "d3-force-3d" {
 
   // The force factories are fluent; typing each chained setter precisely adds
   // no safety here, so they return `any`.
-  /* eslint-disable @typescript-eslint/no-explicit-any */
   export function forceManyBody(): any;
   export function forceLink<N = unknown, L = unknown>(links?: L[]): any;
   export function forceCenter(x?: number, y?: number, z?: number): any;
@@ -54,5 +53,4 @@ declare module "d3-force-3d" {
   export function forceX(x?: number): any;
   export function forceY(y?: number): any;
   export function forceZ(z?: number): any;
-  /* eslint-enable @typescript-eslint/no-explicit-any */
 }

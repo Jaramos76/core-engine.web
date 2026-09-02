@@ -1,15 +1,19 @@
-// Mock authentication endpoint for the Core Engine front page.
+// Temporary authentication endpoint for the Core Engine front page.
 //
 // This exists so the client talks to a real request/response shape today and
-// the swap to the production identity service is a backend-only change. It
-// verifies a single demo credential and issues an opaque session cookie.
+// the swap to the real Core Engine identity service is a backend-only change.
+// It verifies a single shared password and issues an opaque session cookie.
 //
-// Demo credential: any identifier + password `coreengine`.
+// The password is read from CE_DEMO_PASSWORD (server-side env only — never
+// bundled into client JS). In local development it falls back to `coreengine`.
+// This is a placeholder until real authentication is implemented.
 
 import { NextResponse } from "next/server";
 import type { AuthResult } from "@/app/login/_auth/types";
 
-const DEMO_PASSWORD = "coreengine";
+const DEMO_PASSWORD =
+  process.env.CE_DEMO_PASSWORD ??
+  (process.env.NODE_ENV === "production" ? null : "coreengine");
 const SESSION_COOKIE = "ce_session";
 const SESSION_MAX_AGE = 60 * 60 * 8; // 8 hours
 
@@ -29,6 +33,11 @@ export async function POST(request: Request) {
   await new Promise((resolve) =>
     setTimeout(resolve, 420 + Math.random() * 380),
   );
+
+  if (!DEMO_PASSWORD) {
+    // Misconfigured production deployment — fail closed rather than open.
+    return json({ ok: false, error: "Authentication is not configured" }, 503);
+  }
 
   if (!identifier || !password) {
     return json({ ok: false, error: "Enter your credentials" }, 400);

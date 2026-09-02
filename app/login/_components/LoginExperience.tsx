@@ -49,7 +49,9 @@ export default function LoginExperience() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
   const phaseRef = useRef(phase);
-  phaseRef.current = phase;
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
   const handleSubmit = useCallback(async (credentials: Credentials) => {
     if (phaseRef.current !== "idle" && phaseRef.current !== "error") return;

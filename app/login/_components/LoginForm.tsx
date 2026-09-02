@@ -79,7 +79,13 @@ export default function LoginForm({ phase, onSubmit }: LoginFormProps) {
       </button>
 
       <p className="login-hint">
-        Demo access — any identifier, password <code>coreengine</code>
+        {process.env.NODE_ENV === "production" ? (
+          "Restricted access · temporary credentials"
+        ) : (
+          <>
+            Demo access — any identifier, password <code>coreengine</code>
+          </>
+        )}
       </p>
     </form>
   );

@@ -224,7 +224,6 @@ export default function RubiksCube({
         break;
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, reducedMotion]);
 
   // --- per-frame ----------------------------------------------------------
