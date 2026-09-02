@@ -20,9 +20,16 @@ const ListItem: React.FC<{ icon: React.ReactNode; text: string }> = ({ icon, tex
     </li>
 );
 
+const toWebsiteUrl = (website: string): string | null => {
+  const trimmed = website.trim();
+  if (!trimmed || /\s/.test(trimmed)) return null;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+};
+
 export const AlternativeCard: React.FC<AlternativeCardProps> = ({ alternative }) => {
   const categoryColor = categoryColors[alternative.category] || 'bg-slate-500/20 text-slate-300';
-  
+  const websiteUrl = toWebsiteUrl(alternative.website);
+
   return (
     <div className="bg-slate-800/50 border border-slate-700 rounded-xl shadow-lg flex flex-col h-full transition-all duration-300 hover:border-cyan-500/50 hover:shadow-cyan-500/10 hover:-translate-y-1">
       <div className="p-5 flex-grow">
@@ -58,14 +65,20 @@ export const AlternativeCard: React.FC<AlternativeCardProps> = ({ alternative })
         </div>
       </div>
       <div className="p-5 border-t border-slate-700 mt-auto bg-slate-800 rounded-b-xl">
-        <a 
-          href={`https://${alternative.website}`} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center justify-center w-full transition-colors"
-        >
-          Visit Website <ExternalLinkIcon className="w-4 h-4 ml-2" />
-        </a>
+        {websiteUrl ? (
+          <a
+            href={websiteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center justify-center w-full transition-colors"
+          >
+            Visit Website <ExternalLinkIcon className="w-4 h-4 ml-2" />
+          </a>
+        ) : (
+          <span className="text-slate-500 font-semibold flex items-center justify-center w-full">
+            {alternative.website}
+          </span>
+        )}
       </div>
     </div>
   );
