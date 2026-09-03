@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getProjectBundle } from "@/lib/repos/projects";
+import { listTasks } from "@/lib/repos/tasks";
 import { ProjectTabs, type TabDef } from "../../_work/ProjectTabs";
+import { TaskRow } from "../../_work/TaskRow";
 import { WorkShell } from "../../_work/WorkShell";
 import "../../_work/work.css";
 
@@ -48,12 +50,15 @@ export default async function ProjectDetailPage({
   const bundle = await getProjectBundle(decodeURIComponent(id));
   if (!bundle) notFound();
 
-  const { project: p, tasks, meetings, communications, knowledge, documents, team, activity } = bundle;
-  const openTasks = tasks.filter((t) => t.status !== "done");
+  const { project: p, meetings, communications, knowledge, documents, team, activity } = bundle;
+  // richer task rows (with source-email subject, review state) for the Tasks tab
+  const taskRows = await listTasks({ projectId: p.id, view: "all" });
+  const openTaskCount = taskRows.filter((t) => t.status !== "done").length;
+  const reviewRows = taskRows.filter((t) => t.reviewRequired && t.reviewStatus === "pending");
 
   const tabs: TabDef[] = [
     { id: "overview", label: "Overview" },
-    { id: "tasks", label: "Tasks", count: openTasks.length },
+    { id: "tasks", label: "Tasks", count: openTaskCount },
     { id: "emails", label: "Emails", count: communications.length },
     { id: "meetings", label: "Meetings", count: meetings.length },
     { id: "team", label: "Team", count: team.length },
@@ -113,7 +118,7 @@ export default async function ProjectDetailPage({
         {/* overview */}
         <div>
           <div className="wk-fields" style={{ background: "transparent" }}>
-            <Field label="Open tasks" value={String(openTasks.length)} />
+            <Field label="Open tasks" value={String(openTaskCount)} />
             <Field label="Emails" value={String(communications.length)} />
             <Field label="Meetings" value={String(meetings.length)} />
             <Field label="Team" value={String(team.length)} />
@@ -132,21 +137,15 @@ export default async function ProjectDetailPage({
 
         {/* tasks */}
         <div className="wk-list">
-          {tasks.length === 0 && <div className="wk-empty">No tasks.</div>}
-          {tasks.map((t) => (
-            <div key={t.id} className="wk-row">
-              <span className="wk-status" data-s={t.status}>
-                {t.status}
-              </span>
-              <div className="wk-row-main">
-                <div className="wk-row-title">{t.title}</div>
-                <div className="wk-row-sub">
-                  {t.sourceKind && <span className="wk-pill">{t.sourceKind.replace(/_/g, " ")}</span>}
-                  {t.priority && <span>priority: {t.priority}</span>}
-                  {t.dueDate && <span>due {t.dueDate}</span>}
-                </div>
-              </div>
-            </div>
+          {taskRows.length === 0 && <div className="wk-empty">No tasks.</div>}
+          {reviewRows.length > 0 && (
+            <p className="wk-note">
+              {reviewRows.length} task{reviewRows.length === 1 ? "" : "s"} extracted from
+              email/meeting text need review — approve, edit, complete or dismiss.
+            </p>
+          )}
+          {taskRows.map((t) => (
+            <TaskRow key={t.id} task={t} showProject={false} />
           ))}
         </div>
 
@@ -154,7 +153,7 @@ export default async function ProjectDetailPage({
         <div className="wk-list">
           {communications.length === 0 && <div className="wk-empty">No emails.</div>}
           {communications.map((c) => (
-            <div key={c.id} className="wk-row">
+            <div key={c.id} id={`email-${c.id}`} className="wk-row">
               <div className="wk-row-main">
                 <div className="wk-row-title">{c.subject}</div>
                 <div className="wk-row-sub">

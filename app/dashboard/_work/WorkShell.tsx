@@ -2,32 +2,36 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 const NAV = [
-  { href: "/dashboard/projects", label: "Projects" },
-  { href: "/dashboard/tasks", label: "Tasks" },
-];
+  { id: "home", href: "/dashboard/home", label: "Home" },
+  { id: "projects", href: "/dashboard/projects", label: "Projects" },
+  { id: "tasks", href: "/dashboard/tasks", label: "Tasks" },
+  { id: "emails", href: "/dashboard/emails", label: "Emails" },
+  { id: "knowledge", href: "/dashboard/knowledge", label: "Knowledge" },
+  { id: "ideas", href: "/dashboard/ideas", label: "Ideas" },
+  { id: "contacts", href: "/dashboard/contacts", label: "Contacts" },
+  { id: "documents", href: "/dashboard/documents", label: "Documents" },
+] as const;
+
+export type WorkNavId = (typeof NAV)[number]["id"];
 
 export function WorkShell({
   active,
   children,
 }: {
-  active: "projects" | "tasks";
+  active: WorkNavId;
   children: ReactNode;
 }) {
   return (
     <div className="wk-root">
       <header className="wk-topbar">
-        <Link href="/dashboard" className="wk-brand">
+        <Link href="/dashboard/home" className="wk-brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="" aria-hidden="true" />
           Core Engine
         </Link>
         <nav className="wk-nav">
           {NAV.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              data-active={n.href.includes(active)}
-            >
+            <Link key={n.id} href={n.href} data-active={n.id === active}>
               {n.label}
             </Link>
           ))}

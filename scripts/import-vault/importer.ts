@@ -5,6 +5,7 @@
 import { basename, join } from "node:path";
 import { existsSync } from "node:fs";
 
+import { sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 import * as t from "../../lib/db/schema";
@@ -128,8 +129,7 @@ export async function applyPlan(plan: Plan, database: Db): Promise<Report> {
       set[k] = values[k];
     }
     const res = await database
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .insert(table as any)
+      .insert(table as Parameters<typeof database.insert>[0])
       .values(values)
       .onConflictDoUpdate({ target: conflictTarget as never, set })
       .returning({ id: (table as { id: unknown }).id as never });
@@ -232,11 +232,13 @@ export async function applyPlan(plan: Plan, database: Db): Promise<Report> {
       .onConflictDoUpdate({
         target: [t.tasks.sourceType, t.tasks.sourcePath, t.tasks.sourceLine],
         set: {
-          title: stage.title,
-          status: stage.status,
+          // Never clobber a task a human has already acted on through the
+          // review workflow (approved / edited / dismissed) or completed.
+          title: sql`case when ${t.tasks.reviewStatus} in ('edited') then ${t.tasks.title} else ${stage.title} end`,
+          status: sql`case when ${t.tasks.status} = 'done' or ${t.tasks.reviewStatus} in ('approved','edited','dismissed') then ${t.tasks.status} else ${stage.status} end`,
           projectId,
           extractionConfidence: stage.extractionConfidence,
-          reviewRequired: stage.reviewRequired,
+          reviewRequired: sql`case when ${t.tasks.reviewStatus} in ('approved','edited','dismissed') then ${t.tasks.reviewRequired} else ${stage.reviewRequired} end`,
           updatedAt: now,
         },
       });

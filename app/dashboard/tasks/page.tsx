@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { listTasks, taskCounts, type TaskView } from "@/lib/repos/tasks";
+import { TaskRow } from "../_work/TaskRow";
 import { WorkShell } from "../_work/WorkShell";
 import "../_work/work.css";
 
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const FILTERS: { view: TaskView; label: string }[] = [
+  { view: "review", label: "Pending review" },
   { view: "today", label: "Today" },
   { view: "overdue", label: "Overdue" },
   { view: "upcoming", label: "Upcoming" },
@@ -37,9 +39,10 @@ export default async function TasksPage({
         <p className="wk-eyebrow">Work</p>
         <h1 className="wk-h1">Tasks</h1>
         <p className="wk-sub">
-          {counts.open} open, {counts.done} completed. Tasks persist in Core Engine —
-          extracted from project notes, emails and meetings during import, and no
-          longer tied to Obsidian checkboxes.
+          {counts.open} open, {counts.review} awaiting review, {counts.done} done.
+          Tasks persist in Core Engine — extracted from project notes, emails and
+          meetings during import, no longer tied to Obsidian checkboxes. Low-confidence
+          extractions are flagged for review, never deleted.
         </p>
       </div>
 
@@ -51,37 +54,25 @@ export default async function TasksPage({
             data-active={f.view === view}
           >
             {f.label}
+            {f.view === "review" && counts.review > 0 && (
+              <span className="wk-badge">{counts.review}</span>
+            )}
           </Link>
         ))}
       </div>
 
+      {view === "review" && (
+        <p className="wk-note">
+          These were pulled from email or meeting text with lower confidence. Approve
+          to keep, Edit to fix the wording, Complete if already done, or Dismiss if
+          it is not a real task. Nothing here was auto-deleted.
+        </p>
+      )}
+
       <div className="wk-list">
         {tasks.length === 0 && <div className="wk-empty">Nothing here.</div>}
         {tasks.map((t) => (
-          <div key={t.id} className="wk-row">
-            <span className="wk-status" data-s={t.status}>
-              {t.status}
-            </span>
-            <div className="wk-row-main">
-              <div className="wk-row-title">{t.title}</div>
-              <div className="wk-row-sub">
-                {t.projectNumber && (
-                  <Link
-                    href={`/dashboard/projects/${t.projectNumber}`}
-                    className="wk-pill"
-                    style={{ textDecoration: "none" }}
-                  >
-                    {t.projectNumber} {t.projectName}
-                  </Link>
-                )}
-                {t.sourceKind && (
-                  <span className="wk-pill">{t.sourceKind.replace(/_/g, " ")}</span>
-                )}
-                {t.priority && <span>priority: {t.priority}</span>}
-              </div>
-            </div>
-            <div className="wk-row-aside">{t.dueDate ? `due ${t.dueDate}` : ""}</div>
-          </div>
+          <TaskRow key={t.id} task={t} />
         ))}
       </div>
     </WorkShell>

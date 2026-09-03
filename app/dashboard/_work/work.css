@@ -372,3 +372,161 @@
     padding: 6px 8px;
   }
 }
+
+/* ---- task review + entity nav additions ---- */
+
+.wk-badge {
+  margin-left: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: var(--status-dev);
+  color: #1a1408;
+  padding: 0 5px;
+  border-radius: 999px;
+}
+.wk-note {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  background: rgba(226, 185, 59, 0.07);
+  border: 1px solid rgba(226, 185, 59, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  line-height: 1.55;
+}
+.wk-row[data-review] {
+  background: rgba(226, 185, 59, 0.04);
+  border-color: rgba(226, 185, 59, 0.14);
+}
+.wk-conf {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--status-dev);
+}
+.wk-from {
+  color: var(--text-faint);
+  text-decoration: none;
+}
+.wk-from:hover {
+  color: var(--accent);
+}
+.wk-from em {
+  color: var(--text-muted);
+  font-style: normal;
+}
+.wk-review-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 9px;
+}
+.wk-review-actions button {
+  padding: 4px 10px;
+  font-size: 11.5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-inset);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.wk-review-actions button:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent-dim);
+}
+.wk-review-actions button:disabled {
+  opacity: 0.5;
+}
+.wk-review-actions .wk-dismiss:hover:not(:disabled) {
+  color: #f0736f;
+  border-color: rgba(240, 115, 111, 0.4);
+}
+.wk-review-actions-quiet {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.wk-row:hover .wk-review-actions-quiet {
+  opacity: 1;
+}
+.wk-edit {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.wk-edit input {
+  flex: 1;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-inset);
+  color: var(--text);
+  font-size: 13px;
+}
+.wk-edit button {
+  padding: 4px 10px;
+  font-size: 11.5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.wk-flash {
+  animation: wk-flash 1.6s ease;
+}
+@keyframes wk-flash {
+  0%,
+  100% {
+    background: transparent;
+  }
+  20% {
+    background: rgba(94, 234, 212, 0.12);
+  }
+}
+
+/* ---- home command center ---- */
+
+.wk-home-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.wk-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-raised);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.14s ease, transform 0.14s ease;
+}
+.wk-tile:hover {
+  border-color: var(--accent-dim);
+  transform: translateY(-2px);
+}
+.wk-tile[data-alert="true"] {
+  border-color: rgba(226, 185, 59, 0.35);
+  background: rgba(226, 185, 59, 0.05);
+}
+.wk-tile-n {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.wk-tile-l {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.wk-home-section {
+  margin-bottom: 30px;
+}
+.wk-home-section > .wk-eyebrow {
+  margin-bottom: 12px;
+}

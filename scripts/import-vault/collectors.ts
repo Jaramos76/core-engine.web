@@ -124,6 +124,22 @@ function normTaskTitle(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim().slice(0, 80);
 }
 
+// A task carries at most one concrete due date. Some Vault email frontmatter
+// stuffs every date hint it ever saw into `due:` ("3/6/2026, 7/1/2026, EOW,
+// Friday, ..."). Accept only a single unambiguous value; otherwise leave null
+// (the verbatim frontmatter is still preserved on the source communication).
+function cleanDueHint(raw: string | null): string | null {
+  if (!raw) return null;
+  const s = raw.trim();
+  if (!s || s.includes(",")) return null;
+  const iso = s.match(/^\d{4}-\d{2}-\d{2}$/);
+  const mdy = s.match(/^\d{1,2}\/\d{1,2}\/\d{2,4}$/);
+  if (iso || mdy) return s;
+  // short natural-language hint ("Friday", "end of week") — keep if terse
+  if (s.length <= 16 && !/\d{4}/.test(s)) return s;
+  return null;
+}
+
 function collectActionTasks(
   plan: Plan,
   note: Note,
@@ -152,7 +168,7 @@ function collectActionTasks(
       title: cb.text,
       status: cb.checked ? "done" : "open",
       priority: ctx.priority,
-      dueDate: ctx.dueDate,
+      dueDate: cleanDueHint(ctx.dueDate),
       projectKey: ctx.projectKey,
       sourceKind: ctx.sourceKind,
       source: ctx.source,

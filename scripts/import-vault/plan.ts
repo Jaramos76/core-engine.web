@@ -123,7 +123,9 @@ export function resolveContact(
     }
   }
   const key = email ? `email:${email}` : `name:${nn || fields.name.toLowerCase()}`;
-  plan.contacts.set(key, { ...fields, sourcePath: fields.sourcePath ?? key });
+  // sourcePath must be unique per contact — it is half the upsert key.
+  const sourcePath = (fields.sourcePath as string) || key;
+  plan.contacts.set(key, { ...fields, sourcePath });
   indexTitle(plan, fields.name, { type: "contact", key });
   return key;
 }

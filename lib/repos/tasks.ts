@@ -3,7 +3,7 @@ import "server-only";
 import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { projects, tasks } from "@/lib/db/schema";
+import { communications, projects, tasks } from "@/lib/db/schema";
 
 export type TaskView =
   | "today"
@@ -11,6 +11,7 @@ export type TaskView =
   | "upcoming"
   | "by-project"
   | "by-priority"
+  | "review"
   | "completed"
   | "all";
 
@@ -21,12 +22,17 @@ export interface TaskListItem {
   priority: string | null;
   dueDate: string | null;
   sourceKind: string | null;
+  extractionConfidence: number | null;
+  reviewRequired: boolean;
+  reviewStatus: string | null;
   projectId: string | null;
   projectNumber: string | null;
   projectName: string | null;
+  sourceEntityType: string | null;
+  sourceEntityId: string | null;
+  sourceEmailSubject: string | null;
 }
 
-// A due date in the Vault can be "2026-08-21" or "08/21/2026" — normalize.
 function normalizeDue(raw: string | null): string | null {
   if (!raw) return null;
   const s = raw.trim();
@@ -50,16 +56,31 @@ export async function listTasks(opts: {
       priority: tasks.priority,
       dueDate: tasks.dueDate,
       sourceKind: tasks.sourceKind,
+      extractionConfidence: tasks.extractionConfidence,
+      reviewRequired: tasks.reviewRequired,
+      reviewStatus: tasks.reviewStatus,
       projectId: tasks.projectId,
       projectNumber: projects.number,
       projectName: projects.name,
+      sourceEntityType: tasks.sourceEntityType,
+      sourceEntityId: tasks.sourceEntityId,
+      sourceEmailSubject: communications.subject,
     })
     .from(tasks)
     .leftJoin(projects, eq(tasks.projectId, projects.id))
+    .leftJoin(communications, eq(tasks.sourceEntityId, communications.id))
     .where(
       and(
         opts.projectId ? eq(tasks.projectId, opts.projectId) : undefined,
-        view === "completed" ? eq(tasks.status, "done") : ne(tasks.status, "done"),
+        view === "completed"
+          ? eq(tasks.status, "done")
+          : view === "review"
+            ? and(eq(tasks.reviewRequired, true), eq(tasks.reviewStatus, "pending"))
+            : and(
+                ne(tasks.status, "done"),
+                // NULL review_status means "not a review task" — keep it.
+                sql`coalesce(${tasks.reviewStatus}, '') <> 'dismissed'`,
+              ),
       ),
     )
     .orderBy(desc(tasks.priority), asc(tasks.dueDate), asc(tasks.createdAt));
@@ -98,10 +119,50 @@ export async function listTasks(opts: {
 export async function taskCounts(): Promise<Record<string, number>> {
   const [row] = await db
     .select({
-      open: sql<number>`count(*) filter (where ${tasks.status} <> 'done')`.mapWith(Number),
+      open: sql<number>`count(*) filter (where ${tasks.status} <> 'done' and coalesce(${tasks.reviewStatus},'') <> 'dismissed')`.mapWith(Number),
       done: sql<number>`count(*) filter (where ${tasks.status} = 'done')`.mapWith(Number),
-      withProject: sql<number>`count(*) filter (where ${tasks.projectId} is not null)`.mapWith(Number),
+      review: sql<number>`count(*) filter (where ${tasks.reviewRequired} and ${tasks.reviewStatus} = 'pending')`.mapWith(Number),
+      dismissed: sql<number>`count(*) filter (where ${tasks.reviewStatus} = 'dismissed')`.mapWith(Number),
     })
     .from(tasks);
-  return row ?? { open: 0, done: 0, withProject: 0 };
+  return row ?? { open: 0, done: 0, review: 0, dismissed: 0 };
+}
+
+export type TaskAction = "approve" | "dismiss" | "complete" | "reopen" | "edit";
+
+export async function updateTask(
+  id: string,
+  action: TaskAction,
+  patch?: { title?: string; dueDate?: string | null; priority?: string | null },
+): Promise<boolean> {
+  const now = new Date();
+  const set: Record<string, unknown> = { updatedAt: now };
+
+  if (action === "approve") {
+    set.reviewRequired = false;
+    set.reviewStatus = "approved";
+    set.reviewedAt = now;
+  } else if (action === "dismiss") {
+    set.reviewStatus = "dismissed";
+    set.reviewedAt = now;
+    set.status = "done"; // out of the active list; distinguishable by reviewStatus
+  } else if (action === "complete") {
+    set.status = "done";
+    set.completedAt = now;
+    if (patch == null) set.reviewStatus = "approved";
+  } else if (action === "reopen") {
+    set.status = "open";
+    set.completedAt = null;
+    set.reviewStatus = "approved";
+  } else if (action === "edit") {
+    if (patch?.title) set.title = patch.title.trim();
+    if (patch?.dueDate !== undefined) set.dueDate = patch.dueDate;
+    if (patch?.priority !== undefined) set.priority = patch.priority;
+    set.reviewRequired = false;
+    set.reviewStatus = "edited";
+    set.reviewedAt = now;
+  }
+
+  const res = await db.update(tasks).set(set).where(eq(tasks.id, id)).returning({ id: tasks.id });
+  return res.length > 0;
 }
