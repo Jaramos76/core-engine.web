@@ -1,0 +1,41 @@
+# Core Engine Web — production deployment.
+#
+# The reverse proxy (the shared Caddy container) lives elsewhere and reaches
+# this service by name on the external `caddy_shared` network. Port 3000 is
+# NOT published to the host — only Caddy can talk to it.
+#
+# Caddyfile entry (in /opt/openproject/Caddyfile):
+#   coreengine.online { reverse_proxy coreengine-web:3000 }
+
+name: core-engine-web
+
+services:
+  coreengine-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: core-engine-web:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    networks:
+      - caddy_shared
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  caddy_shared:
+    external: true
