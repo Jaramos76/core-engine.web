@@ -158,12 +158,18 @@ export const tasks = pgTable(
     sourceEntityType: text("source_entity_type"),
     sourceEntityId: uuid("source_entity_id"),
     sourceLine: integer("source_line"),
+    // deterministic extraction confidence + human review workflow
+    extractionConfidence: doublePrecision("extraction_confidence"), // 0..1; null for user-authored tasks
+    reviewRequired: boolean("review_required").default(false).notNull(),
+    reviewStatus: text("review_status"), // null (n/a) | pending | approved | edited | dismissed
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     ...provenance,
     ...timestamps,
   },
   (t) => [
     index("tasks_project_idx").on(t.projectId),
     index("tasks_status_idx").on(t.status),
+    index("tasks_review_idx").on(t.reviewRequired, t.reviewStatus),
     uniqueIndex("tasks_source_key").on(t.sourceType, t.sourcePath, t.sourceLine),
   ],
 );
