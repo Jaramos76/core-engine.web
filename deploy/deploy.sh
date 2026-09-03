@@ -56,6 +56,18 @@ if ! dc build; then
   exit 1
 fi
 
+# --- database migrations (explicit, before the new app starts) ------------
+log "starting database…"
+dc up -d db
+log "applying migrations…"
+if ! dc run --rm migrate; then
+  log "MIGRATION FAILED — rolling back to ${PREV_SHA}"
+  git reset --hard "$PREV_SHA"
+  docker image tag "core-engine-web:previous" "$IMAGE" 2>/dev/null || true
+  dc up -d
+  exit 1
+fi
+
 # --- activate -------------------------------------------------------------
 dc up -d
 

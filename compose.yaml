@@ -1,8 +1,11 @@
 # Core Engine Web — production deployment.
 #
 # The reverse proxy (the shared Caddy container) lives elsewhere and reaches
-# this service by name on the external `caddy_shared` network. Port 3000 is
+# `coreengine-web` by name on the external `caddy_shared` network. Port 3000 is
 # NOT published to the host — only Caddy can talk to it.
+#
+# Postgres runs as a private sibling on the internal `core-engine-web_internal`
+# network and is likewise not exposed to the host.
 #
 # Caddyfile entry (in /opt/openproject/Caddyfile):
 #   coreengine.online { reverse_proxy coreengine-web:3000 }
@@ -10,6 +13,45 @@
 name: core-engine-web
 
 services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: core_engine
+      POSTGRES_USER: core_engine
+      POSTGRES_PASSWORD: ${PG_PASSWORD:?PG_PASSWORD is required}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U core_engine -d core_engine"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  # One-shot: applies pending SQL migrations, then exits. Not started by
+  # `up`; the deploy script runs `docker compose run --rm migrate`.
+  migrate:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    command: ["npx", "tsx", "scripts/migrate.ts"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://core_engine:${PG_PASSWORD}@db:5432/core_engine
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+
   coreengine-web:
     build:
       context: .
@@ -22,8 +64,13 @@ services:
       NODE_ENV: production
       PORT: "3000"
       HOSTNAME: 0.0.0.0
+      DATABASE_URL: postgres://core_engine:${PG_PASSWORD}@db:5432/core_engine
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - caddy_shared
+      - internal
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
       interval: 30s
@@ -36,6 +83,11 @@ services:
         max-size: "10m"
         max-file: "3"
 
+volumes:
+  pgdata:
+
 networks:
   caddy_shared:
     external: true
+  internal:
+    driver: bridge
