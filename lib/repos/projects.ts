@@ -23,6 +23,158 @@ export interface ProjectListItem extends ProjectRow {
   meetings: number;
 }
 
+// --- native project creation (no Vault note) -----------------------------
+
+export interface NewProjectInput {
+  number: string;
+  name: string;
+  status?: string | null;
+  addressLine?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  projectType?: string | null;
+  scopeOfWork?: string | null;
+  currentPhase?: string | null;
+  priority?: string | null;
+  client?: string | null;
+  architect?: string | null;
+  projectManager?: string | null;
+  disciplines?: string[];
+  ahj?: string | null;
+  permitNumber?: string | null;
+  permitStatus?: string | null;
+  startDate?: string | null;
+  targetDate?: string | null;
+  nextAction?: string | null;
+  nextActionDue?: string | null;
+  health?: string | null;
+}
+
+export type CreateProjectResult =
+  | { ok: true; id: string; number: string }
+  | { ok: false; error: string; field?: string };
+
+const NATIVE_SOURCE = "core-engine";
+
+function trimOrNull(s?: string | null): string | null {
+  const v = (s ?? "").trim();
+  return v === "" ? null : v;
+}
+
+export async function createProject(
+  input: NewProjectInput,
+  actor = "operator",
+): Promise<CreateProjectResult> {
+  const number = (input.number ?? "").trim();
+  const name = (input.name ?? "").trim();
+  if (!number) return { ok: false, error: "Project number is required.", field: "number" };
+  if (!name) return { ok: false, error: "Project name is required.", field: "name" };
+  if (number.length > 40) return { ok: false, error: "Project number is too long.", field: "number" };
+
+  const clash = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(eq(projects.number, number))
+    .limit(1);
+  if (clash.length) {
+    return { ok: false, error: `Project ${number} already exists.`, field: "number" };
+  }
+
+  const now = new Date();
+  const disciplines = (input.disciplines ?? [])
+    .map((d) => d.trim())
+    .filter(Boolean);
+
+  try {
+    return await db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(projects)
+        .values({
+          number,
+          name,
+          status: trimOrNull(input.status) ?? "active",
+          currentPhase: trimOrNull(input.currentPhase),
+          priority: trimOrNull(input.priority),
+          health: trimOrNull(input.health),
+          projectType: trimOrNull(input.projectType),
+          scopeOfWork: trimOrNull(input.scopeOfWork),
+          addressLine: trimOrNull(input.addressLine),
+          city: trimOrNull(input.city),
+          state: trimOrNull(input.state),
+          zip: trimOrNull(input.zip),
+          client: trimOrNull(input.client),
+          architect: trimOrNull(input.architect),
+          projectManager: trimOrNull(input.projectManager),
+          ahj: trimOrNull(input.ahj),
+          permitNumber: trimOrNull(input.permitNumber),
+          permitStatus: trimOrNull(input.permitStatus),
+          disciplines,
+          startDate: trimOrNull(input.startDate),
+          targetDate: trimOrNull(input.targetDate),
+          nextAction: trimOrNull(input.nextAction),
+          nextActionDue: trimOrNull(input.nextActionDue),
+          // native origin — never a Vault import
+          sourceType: NATIVE_SOURCE,
+          sourcePath: null,
+          sourceHash: null,
+          raw: null,
+          importedAt: null,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning({ id: projects.id, number: projects.number });
+
+      const nextAction = trimOrNull(input.nextAction);
+      if (nextAction) {
+        await tx.insert(tasks).values({
+          title: nextAction,
+          status: "open",
+          priority: trimOrNull(input.priority),
+          dueDate: trimOrNull(input.nextActionDue),
+          projectId: row.id,
+          sourceKind: "project_next_action",
+          sourceEntityType: "project",
+          sourceEntityId: row.id,
+          sourceType: NATIVE_SOURCE,
+          // unique per project — the task natural key is (sourceType, sourcePath, sourceLine)
+          sourcePath: `project/${row.id}/next-action`,
+          sourceLine: null,
+          extractionConfidence: null,
+          reviewRequired: false,
+          reviewStatus: null,
+          importedAt: null,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      await tx.insert(activity).values({
+        actor,
+        actorKind: "person",
+        verb: "created",
+        entityType: "project",
+        entityId: row.id,
+        projectId: row.id,
+        summary: `Project ${row.number} created in Core Engine`,
+        occurredAt: now,
+      });
+
+      return { ok: true as const, id: row.id, number: row.number };
+    });
+  } catch (err) {
+    // Drizzle wraps the driver error; the PG error (code 23505 = unique_violation)
+    // is on `.cause`. A concurrent create can race us to the same number.
+    const e = err as { code?: string; message?: string; cause?: { code?: string } };
+    const code = e?.code ?? e?.cause?.code;
+    if (code === "23505" || /duplicate key|unique constraint/i.test(String(e?.message ?? ""))) {
+      return { ok: false, error: `Project ${number} already exists.`, field: "number" };
+    }
+    console.error("[createProject] failed:", e?.message ?? err);
+    return { ok: false, error: "Could not create the project. Please try again." };
+  }
+}
+
 export async function listProjects(): Promise<ProjectListItem[]> {
   // Drop the verbose frontmatter dump + hash from the list payload.
   const rows = (await db.select().from(projects).orderBy(projects.number)).map(

@@ -18,19 +18,26 @@ export default async function ProjectsPage() {
   return (
     <WorkShell active="projects">
       <div className="wk-head">
-        <p className="wk-eyebrow">Work</p>
-        <h1 className="wk-h1">Projects</h1>
+        <div className="wk-head-row">
+          <div>
+            <p className="wk-eyebrow">Work</p>
+            <h1 className="wk-h1">Projects</h1>
+          </div>
+          <Link href="/dashboard/projects/new" className="wk-btn-primary wk-btn-sm">
+            + New project
+          </Link>
+        </div>
         <p className="wk-sub">
           {projects.length
-            ? `${projects.length} project${projects.length === 1 ? "" : "s"} imported from the Vault. Real data — tasks, emails and meetings persist in Core Engine.`
-            : "No projects imported yet. Run the Vault importer."}
+            ? `${projects.length} project${projects.length === 1 ? "" : "s"}. Real data — tasks, emails and meetings persist in Core Engine. New projects are created here directly, no Vault note required.`
+            : "No projects yet. Create one, or run the Vault importer."}
         </p>
       </div>
 
       {projects.length === 0 ? (
         <div className="wk-empty">
-          Nothing here yet. Import a project with{" "}
-          <code>npm run import:vault -- --project &quot;25-14&quot; --apply</code>.
+          Nothing here yet.{" "}
+          <Link href="/dashboard/projects/new">Create the first project →</Link>
         </div>
       ) : (
         <div className="wk-proj-grid">

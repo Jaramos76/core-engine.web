@@ -275,9 +275,20 @@ export default async function ProjectDetailPage({
       </ProjectTabs>
 
       <div className="wk-provenance">
-        source: {p.sourceType} · {p.sourcePath}
-        <br />
-        imported: {fmtDate(p.importedAt)} · this data mirrors the Vault, which remains authoritative
+        {p.sourceType === "core-engine" ? (
+          <>
+            origin: created natively in Core Engine
+            <br />
+            created: {fmtDate(p.createdAt)} · authored here, not imported from the Vault
+          </>
+        ) : (
+          <>
+            source: {p.sourceType} · {p.sourcePath}
+            <br />
+            imported: {fmtDate(p.importedAt)} · this data mirrors the Vault, which remains
+            authoritative for imported records
+          </>
+        )}
       </div>
     </WorkShell>
   );
