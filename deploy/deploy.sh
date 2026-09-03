@@ -10,6 +10,7 @@
 set -Eeuo pipefail
 
 APP_DIR="${APP_DIR:-/opt/core-engine-web}"
+ROLLBACK_ROOT="${ROLLBACK_ROOT:-/opt/core-engine-web-rollbacks}"
 BRANCH="${DEPLOY_BRANCH:-main}"
 COMPOSE_FILE="${COMPOSE_FILE:-compose.yaml}"
 SERVICE="coreengine-web"
@@ -31,14 +32,15 @@ NEW_SHA="$(git rev-parse "origin/${BRANCH}")"
 log "target sha  : $NEW_SHA (origin/${BRANCH})"
 
 # --- rollback snapshot (code + env; this app has no data volume) -------------
-ROLLBACK_DIR="${APP_DIR}.rollback-${TS}"
+mkdir -p "$ROLLBACK_ROOT"
+ROLLBACK_DIR="${ROLLBACK_ROOT}/${TS}"
 log "snapshot    : $ROLLBACK_DIR"
 mkdir -p "$ROLLBACK_DIR"
 git archive HEAD | tar -x -C "$ROLLBACK_DIR"
 [ -f .env ] && cp -a .env "$ROLLBACK_DIR/.env"
 echo "$PREV_SHA" > "$ROLLBACK_DIR/.rollback_sha"
 # prune old snapshots
-mapfile -t OLD < <(ls -1dt "${APP_DIR}".rollback-* 2>/dev/null | tail -n +$((KEEP_ROLLBACKS + 1)) || true)
+mapfile -t OLD < <(ls -1dt "${ROLLBACK_ROOT}"/*/ 2>/dev/null | tail -n +$((KEEP_ROLLBACKS + 1)) || true)
 [ "${#OLD[@]}" -gt 0 ] && rm -rf "${OLD[@]}" && log "pruned ${#OLD[@]} old snapshot(s)"
 
 # keep the current image reachable for a fast rollback

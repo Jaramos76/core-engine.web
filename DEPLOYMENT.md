@@ -49,7 +49,7 @@ Push to `main` → GitHub Actions (`.github/workflows/deploy.yml`):
 
 1. `verify`: `npm ci`, `tsc --noEmit`, `npm run lint`, `npm run build`
 2. `deploy`: SSH to the VPS, run `./deploy/deploy.sh`, which:
-   - snapshots the current checkout to `/opt/core-engine-web.rollback-<ts>`
+   - snapshots the current checkout to `/opt/core-engine-web-rollbacks/<ts>`
    - tags the running image `core-engine-web:previous`
    - `git reset --hard origin/main`
    - `docker compose build` — if this fails, production is left untouched
@@ -61,19 +61,23 @@ Push to `main` → GitHub Actions (`.github/workflows/deploy.yml`):
 
 A broken push therefore never leaves the site down.
 
+Deploy user: **`ceweb`** — a dedicated non-root user in the `docker` group that
+owns `/opt/core-engine-web` and `/opt/core-engine-web-rollbacks`. It exists
+only for this deployment; the other apps and the `tunnel` user are untouched.
+
 ### Required GitHub repository secrets
 
 | Secret | Value |
 | --- | --- |
 | `DEPLOY_HOST` | `2.25.81.58` |
-| `DEPLOY_USER` | the VPS deploy user (has docker access, owns `/opt/core-engine-web`) |
-| `DEPLOY_SSH_KEY` | private key whose public half is in that user's `~/.ssh/authorized_keys` |
+| `DEPLOY_USER` | `ceweb` |
+| `DEPLOY_SSH_KEY` | the deploy private key (public half in `/home/ceweb/.ssh/authorized_keys`) |
 | `DEPLOY_KNOWN_HOSTS` | output of `ssh-keyscan -t ed25519 2.25.81.58` |
 
 ## Production — manual (first bring-up or recovery)
 
 ```bash
-ssh <deploy-user>@2.25.81.58
+ssh ceweb@2.25.81.58
 cd /opt/core-engine-web
 git pull
 docker compose up -d --build
@@ -84,13 +88,13 @@ Manual rollback:
 
 ```bash
 cd /opt/core-engine-web
-git reset --hard $(cat /opt/core-engine-web.rollback-<ts>/.rollback_sha)
+git reset --hard $(cat /opt/core-engine-web-rollbacks/<ts>/.rollback_sha)
 docker compose up -d --build
 ```
 
 ## Server-side configuration
 
-`/opt/core-engine-web/.env` (root-owned, `chmod 600`, **never committed**):
+`/opt/core-engine-web/.env` (`ceweb`-owned, `chmod 600`, **never committed**):
 
 ```
 CE_DEMO_PASSWORD=<strong value>
