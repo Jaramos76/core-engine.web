@@ -37,7 +37,7 @@ export function WorkShell({
           ))}
         </nav>
         <div className="wk-topbar-right">
-          <Link href="/dashboard?view=calendar">Calendar</Link><Link href="/dashboard?view=lola">Lola</Link><Link href="/dashboard/brain">Brain ↗</Link>
+          <Link href="/dashboard?view=agents">Agents</Link><Link href="/dashboard?view=skills">Skills</Link><Link href="/dashboard?view=tools">Tools</Link><Link href="/dashboard?view=calendar">Calendar</Link><Link href="/dashboard?view=lola">Lola</Link><Link href="/dashboard/brain">Brain ↗</Link>
         </div>
       </header>
       <main className="wk-main">{children}</main>
