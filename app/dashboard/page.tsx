@@ -8,5 +8,5 @@ export const metadata: Metadata = { title: 'Second Brain · Core Engine', robots
 export default async function DashboardPage({searchParams}:{searchParams:Promise<{view?:string}>}) {
   const {view}=await searchParams;
   if(view==='spatial') return <><a className="sb-return" href="/dashboard">← Back to Second Brain</a><OSProvider><AgenticWorkspace /></OSProvider></>;
-  return <SecondBrain />;
+  return <SecondBrain initialView={view==='calendar'||view==='lola'?view:'overview'} />;
 }
