@@ -60,7 +60,7 @@ export function TaskRow({ task, showProject = true, onUpdated }: { task: TaskLis
               autoFocus
             />
             <label>Due date<input type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)}/></label>
-            <label>Priority<select value={priority} onChange={e=>setPriority(e.target.value)}><option value="">None</option>{[...new Set(['low','normal','medium','high','critical',...(task.priority?[task.priority]:[])])].map(p=><option key={p} value={p}>{p}</option>)}</select></label>
+            <label>Priority<select aria-label="Task priority" value={priority} onChange={e=>setPriority(e.target.value)}><option value="">None</option>{[...new Set(['low','normal','medium','high','critical',...(task.priority?[task.priority]:[])])].map(p=><option key={p} value={p}>{p}</option>)}</select></label>
             <button type="submit" disabled={busy||!title.trim()}>
               Save
             </button>
