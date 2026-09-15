@@ -35,12 +35,20 @@ const nextConfig: NextConfig = {
   // Self-contained server bundle for the production Docker image.
   output: "standalone",
   reactStrictMode: true,
+  experimental: { proxyTimeout: 620000 },
   poweredByHeader: false,
   async headers() {
     return [
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/api/v1/ais-brain/:path*",
+        headers: [
+          {key: "Content-Security-Policy", value: csp.replace("frame-ancestors 'none'", "frame-ancestors 'self'")},
+          {key: "X-Frame-Options", value: "SAMEORIGIN"},
+        ],
       },
     ];
   },

@@ -126,5 +126,5 @@ export async function POST(request: Request) {
     },
     cancel() {closed=true;clearInterval(timer);},
   });
-  return new Response(stream,{headers:{'Content-Type':'application/json','Cache-Control':'no-store, no-transform','X-Accel-Buffering':'no'}});
+  return new Response(stream,{headers:{'Content-Type':'application/json','Cache-Control':'no-store, no-transform','X-Accel-Buffering':'no','Content-Encoding':'identity'}});
 }
