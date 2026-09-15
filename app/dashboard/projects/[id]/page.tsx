@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getProjectBundle } from "@/lib/repos/projects";
 import { listTasks } from "@/lib/repos/tasks";
 import { ProjectTabs, type TabDef } from "../../_work/ProjectTabs";
+import {ProjectEditor} from "../../_work/ProjectEditor";
 import { TaskRow } from "../../_work/TaskRow";
 import { WorkShell } from "../../_work/WorkShell";
 import "../../_work/work.css";
@@ -77,6 +78,7 @@ export default async function ProjectDetailPage({
           {p.number}
         </p>
         <h1 className="wk-h1">{p.name}</h1>
+        <ProjectEditor id={p.id} values={{name:p.name,status:p.status,currentPhase:p.currentPhase,nextAction:p.nextAction,targetDate:p.targetDate}}/>
 
         <div className="wk-fields">
           <Field label="Status" value={p.status} />

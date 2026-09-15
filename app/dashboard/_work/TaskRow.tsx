@@ -12,20 +12,26 @@ async function patch(id: string, body: Record<string, unknown>) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
-  return res.ok;
+  if (!res.ok) { const body = await res.json().catch(() => ({})); throw new Error(body.error || 'Could not save task.'); }
+  return true;
 }
 
-export function TaskRow({ task, showProject = true }: { task: TaskListItem; showProject?: boolean }) {
+export function TaskRow({ task, showProject = true, onUpdated }: { task: TaskListItem; showProject?: boolean; onUpdated?: () => void | Promise<void> }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
+  const [dueDate, setDueDate] = useState(task.dueDate?.match(/^\d{4}-\d{2}-\d{2}/)?.[0] ?? task.dueDate?.replace(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, (_,m,d,y) => `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`) ?? '');
+  const [priority,setPriority] = useState(task.priority ?? '');
+  const [error,setError] = useState('');
+  const [saved,setSaved] = useState(false);
 
   const act = async (action: string, extra?: Record<string, unknown>) => {
     setBusy(true);
-    const ok = await patch(task.id, { action, ...extra });
-    setBusy(false);
-    if (ok) router.refresh();
+    setError(''); setSaved(false);
+    try { await patch(task.id, { action, ...extra }); setEditing(false); setSaved(true); await onUpdated?.(); router.refresh(); }
+    catch(e) { setError(e instanceof Error ? e.message : 'Could not save task.'); }
+    finally { setBusy(false); }
   };
 
   const inReview = task.reviewRequired && task.reviewStatus === "pending";
@@ -37,21 +43,25 @@ export function TaskRow({ task, showProject = true }: { task: TaskListItem; show
         {task.status === "done" ? "done" : inReview ? "review" : task.status}
       </span>
       <div className="wk-row-main">
+        {error && <p role="alert">{error}</p>}
+        {saved && <p role="status">Saved.</p>}
         {editing ? (
           <form
             className="wk-edit"
             onSubmit={(e) => {
               e.preventDefault();
-              setEditing(false);
-              act("edit", { title });
+              act("edit", { title, dueDate:dueDate || null, priority:priority || null });
             }}
           >
             <input
+              aria-label="Task title" required maxLength={500}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
             />
-            <button type="submit" disabled={busy}>
+            <label>Due date<input type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)}/></label>
+            <label>Priority<select aria-label="Task priority" value={priority} onChange={e=>setPriority(e.target.value)}><option value="">None</option>{[...new Set(['low','normal','medium','high','critical',...(task.priority?[task.priority]:[])])].map(p=><option key={p} value={p}>{p}</option>)}</select></label>
+            <button type="submit" disabled={busy||!title.trim()}>
               Save
             </button>
             <button type="button" onClick={() => setEditing(false)}>
@@ -115,10 +125,11 @@ export function TaskRow({ task, showProject = true }: { task: TaskListItem; show
             </button>
           </div>
         )}
-        {!inReview && task.status !== "done" && !editing && (
+        {!inReview && !editing && (
           <div className="wk-review-actions wk-review-actions-quiet">
-            <button type="button" disabled={busy} onClick={() => act("complete")}>
-              Complete
+            <button type="button" disabled={busy} onClick={() => setEditing(true)}>Edit</button>
+            <button type="button" disabled={busy} onClick={() => act(task.status === "done" ? "reopen" : "complete")}>
+              {task.status === "done" ? "Reopen" : "Complete"}
             </button>
           </div>
         )}

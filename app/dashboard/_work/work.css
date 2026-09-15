@@ -530,3 +530,5 @@
 .wk-home-section > .wk-eyebrow {
   margin-bottom: 12px;
 }
+.wk-root{--accent:#8dc5e3;--text:#e7eff5;--text-muted:#a9bdcd;--text-faint:#92a9ba;--border:#294253;background:#10171d}.wk-nav a[data-active="true"]{background:#1c3a50;color:#d7eefa}.wk-edit{display:flex;flex-wrap:wrap;gap:10px;align-items:end}.wk-edit label{display:grid;gap:5px;font-size:12px;color:#b7d0e1}.wk-edit input,.wk-edit select{background:#142a3b;color:#e7eff5;border:1px solid #41667f;border-radius:5px;padding:8px;max-width:100%}.wk-row [role=alert]{color:#ffc1b9}.wk-row [role=status]{color:#9cd5f5}.wk-review-actions-quiet{opacity:1}.wk-topbar{height:auto;min-height:60px;flex-wrap:wrap;padding:12px 20px}.wk-nav{overflow-x:auto;max-width:100%}
+.wk-project-editor{margin:18px 0}.wk-project-editor button{background:#1d3d54;border:1px solid #456d89;color:#deeffc;border-radius:6px;padding:8px 14px}.wk-project-editor .wk-edit{padding:20px;background:#132432;border:1px solid #35566e;border-radius:8px}.wk-project-editor [role=alert]{color:#ffc1b9}

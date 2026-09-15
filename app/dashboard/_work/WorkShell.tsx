@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 const NAV = [
-  { id: "home", href: "/dashboard/home", label: "Home" },
+  { id: "home", href: "/dashboard", label: "Home" },
   { id: "projects", href: "/dashboard/projects", label: "Projects" },
   { id: "tasks", href: "/dashboard/tasks", label: "Tasks" },
   { id: "emails", href: "/dashboard/emails", label: "Emails" },
@@ -24,7 +24,7 @@ export function WorkShell({
   return (
     <div className="wk-root">
       <header className="wk-topbar">
-        <Link href="/dashboard/home" className="wk-brand">
+        <Link href="/dashboard" className="wk-brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="" aria-hidden="true" />
           Core Engine
@@ -37,7 +37,7 @@ export function WorkShell({
           ))}
         </nav>
         <div className="wk-topbar-right">
-          <Link href="/dashboard">Spatial view →</Link>
+          <Link href="/dashboard?view=calendar">Calendar</Link><Link href="/dashboard?view=lola">Lola</Link><Link href="/dashboard/brain">Brain ↗</Link>
         </div>
       </header>
       <main className="wk-main">{children}</main>
