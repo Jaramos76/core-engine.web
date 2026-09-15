@@ -1,11 +1,50 @@
-import type { Metadata } from "next";
-import BrainClient from "./BrainClient";
+"use client";
 
-export const metadata: Metadata = {
-  title: "3D Brain · Core Engine",
-  robots: { index: false, follow: false },
-};
+import { useEffect } from "react";
 
 export default function BrainPage() {
-  return <BrainClient />;
+  useEffect(() => {
+    window.location.replace(
+      "/api/v1/ais-brain/"
+    );
+  }, []);
+
+  return (
+    <main
+      style={{
+        position: "fixed",
+        inset: 0,
+        display: "grid",
+        placeItems: "center",
+        background: "#000001",
+        color: "#e5e7eb",
+        fontFamily:
+          "system-ui, sans-serif",
+      }}
+    >
+      <div
+        style={{
+          textAlign: "center",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "18px",
+            marginBottom: "8px",
+          }}
+        >
+          Opening Core Engine Brain…
+        </div>
+
+        <a
+          href="/api/v1/ais-brain/"
+          style={{
+            color: "#93c5fd",
+          }}
+        >
+          Open Brain directly
+        </a>
+      </div>
+    </main>
+  );
 }
