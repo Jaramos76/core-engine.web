@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 const CORE_ENGINE_GATEWAY_URL =
   process.env.CORE_ENGINE_GATEWAY_URL ?? "http://172.16.1.1:8765";
 
-export async function POST(request: Request) {
+async function processChat(request: Request) {
   const unauth=await requireApiSession(); if(unauth)return unauth;
   const origin=request.headers.get("origin");
   if(origin&&new URL(origin).host!==request.headers.get("host"))return NextResponse.json({error:"Origin not allowed"},{status:403});
@@ -100,4 +100,31 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+}
+
+// Keep the connection active while the agent works, including behind proxy idle timeouts.
+export async function POST(request: Request) {
+  const unauth = await requireApiSession();
+  if (unauth) return unauth;
+  const origin = request.headers.get('origin');
+  try { if (!origin || new URL(origin).host !== request.headers.get('host')) return NextResponse.json({error:'Origin not allowed'},{status:403}); }
+  catch { return NextResponse.json({error:'Invalid origin'},{status:403}); }
+  const encoder = new TextEncoder();
+  let timer: ReturnType<typeof setInterval> | undefined;
+  let closed = false;
+  const stream = new ReadableStream({
+    start(controller) {
+      const write = (text: string) => { if (!closed) controller.enqueue(encoder.encode(text)); };
+      write(' ');
+      timer = setInterval(() => write(' '), 15000);
+      void processChat(request).then(async response => {
+        write(await response.text());
+      }).catch(() => write(JSON.stringify({error:'Lola could not complete this request.'}))).finally(() => {
+        clearInterval(timer);
+        if (!closed) {closed=true;controller.close();}
+      });
+    },
+    cancel() {closed=true;clearInterval(timer);},
+  });
+  return new Response(stream,{headers:{'Content-Type':'application/json','Cache-Control':'no-store, no-transform','X-Accel-Buffering':'no'}});
 }
