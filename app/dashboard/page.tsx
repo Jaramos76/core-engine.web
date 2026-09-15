@@ -1,21 +1,12 @@
-import type { Metadata } from "next";
-
-import { OSProvider } from "./_os/OSProvider";
-import { AgenticWorkspace } from "./_os/AgenticWorkspace";
-import "./os.css";
-
-export const metadata: Metadata = {
-  title: "Core Engine OS",
-  robots: { index: false, follow: false },
-};
-
-// The Agentic OS — Core Engine's operating environment. First vertical slice:
-// spatial graph, agents/projects/tasks as nodes, selection + context inspector,
-// search, command palette, active context, attention engine, timeline.
-export default function DashboardPage() {
-  return (
-    <OSProvider>
-      <AgenticWorkspace />
-    </OSProvider>
-  );
+import type { Metadata } from 'next';
+import { OSProvider } from './_os/OSProvider';
+import { AgenticWorkspace } from './_os/AgenticWorkspace';
+import { SecondBrain } from './_os/SecondBrain';
+import './os.css';
+import './second-brain.css';
+export const metadata: Metadata = { title: 'Second Brain · Core Engine', robots: { index: false, follow: false } };
+export default async function DashboardPage({searchParams}:{searchParams:Promise<{view?:string}>}) {
+  const {view}=await searchParams;
+  if(view==='spatial') return <><a className="sb-return" href="/dashboard">← Back to Second Brain</a><OSProvider><AgenticWorkspace /></OSProvider></>;
+  return <SecondBrain />;
 }

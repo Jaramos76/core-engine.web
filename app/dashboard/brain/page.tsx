@@ -5,7 +5,7 @@ import { useEffect } from "react";
 export default function BrainPage() {
   useEffect(() => {
     window.location.replace(
-      "/api/v1/ais-brain/"
+      "/api/v1/ais-brain/" + window.location.search
     );
   }, []);
 
